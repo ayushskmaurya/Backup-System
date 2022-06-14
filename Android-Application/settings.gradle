@@ -1,0 +1,2 @@
+rootProject.name = "Backup System"
+include ':app'
