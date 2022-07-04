@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Backup System</string>
+
+    <string name="browse">Browse</string>
 </resources>
