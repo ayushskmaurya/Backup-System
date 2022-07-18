@@ -5,28 +5,44 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
+    android:padding="10dp"
     tools:context=".MainActivity">
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/logo_activityMain"
         android:layout_width="170dp"
         android:layout_height="170dp"
-        app:layout_constraintBottom_toTopOf="@+id/browse_activityMain"
+        app:layout_constraintBottom_toTopOf="@+id/proceed_activityMain"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:shapeAppearanceOverlay="@style/circular"
         app:srcCompat="@drawable/logo" />
 
-    <Button
-        android:id="@+id/browse_activityMain"
+    <EditText
+        android:id="@+id/dirPath_activityMain"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
-        android:layout_marginEnd="10dp"
-        android:layout_marginBottom="30dp"
+        android:background="@drawable/bg_input_fields"
+        android:hint="@string/dir_path"
+        android:importantForAutofill="no"
+        android:inputType="text"
         android:padding="7dp"
-        android:text="@string/browse"
+        android:textColor="@color/black"
+        android:textColorHint="@color/text_hint"
+        android:textCursorDrawable="@drawable/cursor_color"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/proceed_activityMain"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/proceed_activityMain"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:padding="7dp"
+        android:text="@string/proceed"
         android:textAllCaps="false"
         android:textColor="@color/white"
         android:textSize="18sp"
