@@ -5,8 +5,23 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Backup System</title>
 	<link rel="icon" href="{{ url_for('static', filename='logo/logo.ico') }}" type="image/ico">
+	<link rel='stylesheet' href="{{ url_for('static', filename='css/main.css') }}" type='text/css'>
 </head>
 <body>
-	Backup System
+	<div class="logo">
+		<img src="{{ url_for('static', filename='logo/logo.jpg') }}" alt="Backup System" />
+	</div>
+
+	{% if dir_path %}
+	<div class="dir_path">
+		<span class="label">Directory Path:</span><br>
+		<span class="path">{{ dir_path }}</span>
+	</div>
+
+	{% else %}
+	<div class="browse">
+		<button onclick="location.href='/browse';">Browse</button>
+	</div>
+	{% endif %}
 </body>
 </html>
