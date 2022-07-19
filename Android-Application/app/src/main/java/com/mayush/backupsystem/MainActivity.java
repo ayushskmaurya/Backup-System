@@ -13,7 +13,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
-	public static final String ENTERED_DIR_PATH = "com.mayush.backupsystem.enteredDirPath";
+	private static final String ENTERED_DIR_PATH = "com.mayush.backupsystem.enteredDirPath";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
