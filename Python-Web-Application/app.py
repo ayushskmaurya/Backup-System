@@ -14,16 +14,16 @@ def pc_files(abs_path, path, pc_dir_list):
 	for file in files:
 		abs_file_path = os.path.join(abs_path, file)
 		file_path = os.path.join(path, file)
-		isDir, last_modified = None, None
+		is_dir, last_modified = None, None
 
 		if os.path.isdir(abs_file_path):
-			isDir = True
+			is_dir = True
 			pc_files(abs_file_path, file_path, pc_dir_list)
 		else:
-			isDir = False
+			is_dir = False
 			last_modified = os.path.getmtime(abs_file_path)
 
-		pc_dir_list[file_path.replace("\\", "/")] = {'isDir': isDir, 'last_modified': last_modified}
+		pc_dir_list[file_path] = {'is_dir': is_dir, 'last_modified': last_modified}
 
 
 @app.route("/")
