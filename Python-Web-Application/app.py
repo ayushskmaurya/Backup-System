@@ -21,9 +21,9 @@ def pc_files(abs_path, path, pc_dir_list):
 			pc_files(abs_file_path, file_path, pc_dir_list)
 		else:
 			is_dir = False
-			last_modified = os.path.getmtime(abs_file_path)
+			last_modified = int(os.path.getmtime(abs_file_path))
 
-		pc_dir_list[file_path] = {'is_dir': is_dir, 'last_modified': last_modified}
+		pc_dir_list[file_path.replace("\\", "/")] = {'is_dir': is_dir, 'last_modified': last_modified}
 
 
 @app.route("/")

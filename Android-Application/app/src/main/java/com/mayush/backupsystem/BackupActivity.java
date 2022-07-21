@@ -17,6 +17,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BackupActivity extends AppCompatActivity {
 	private static final String TAG = "AppLogBackupActivity";
@@ -48,8 +51,11 @@ public class BackupActivity extends AppCompatActivity {
 						Request.Method.GET,
 						Base.getBaseUrl() + "/get_pc_dir_list",
 						response -> {
-							Log.d(TAG, response);
-							getAndroidDirList(stepInfoView);
+							try {
+								getAndroidDirList(stepInfoView, new JSONObject(response));
+							} catch (JSONException e) {
+								Log.e(TAG, e.toString());
+							}
 						},
 						error -> Log.e(TAG, error.toString())
 				)
@@ -57,14 +63,14 @@ public class BackupActivity extends AppCompatActivity {
 	}
 
 	// Retrieving list of all files & folders of Android.
-	private void getAndroidDirList(TextView stepInfoView) {
+	private void getAndroidDirList(TextView stepInfoView, JSONObject pcDirList) {
 		String stepInfo = "Retrieving list of all files & folders of Android...";
 		stepInfoView.setText(stepInfo);
 
 		if(dir.exists() && dir.isDirectory()) {
-			JSONObject androidDirList = new JSONObject();
+			HashMap<String, JSONObject> androidDirList = new HashMap<>();
 			android_files(dir, "", androidDirList);
-			Log.d(TAG, androidDirList.toString());
+			compareList(pcDirList, androidDirList, stepInfoView);
 		}
 		else {
 			Toast.makeText(this, "Please enter valid directory path", Toast.LENGTH_SHORT).show();
@@ -73,15 +79,15 @@ public class BackupActivity extends AppCompatActivity {
 	}
 
 	// Listing all the files and folders of the entered directory path.
-	private void android_files(File dir, String path, JSONObject androidDirList) {
+	private void android_files(File dir, String path, HashMap<String, JSONObject> androidDirList) {
 		File[] files = dir.listFiles();
-		for(File file: files) {
+		for(File file : files) {
 			boolean isDir;
 			String lastModified = null;
 
 			if(file.isDirectory()) {
 				isDir = true;
-				android_files(file, file.getName() + "\\", androidDirList);
+				android_files(file, file.getName(), androidDirList);
 			}
 			else {
 				isDir = false;
@@ -92,10 +98,41 @@ public class BackupActivity extends AppCompatActivity {
 			try {
 				fileInfo.put("isDir", isDir);
 				fileInfo.put("lastModified", lastModified);
-				androidDirList.put(path + file.getName(), fileInfo);
+				androidDirList.put((new File(path, file.getName())).toString(), fileInfo);
 			} catch (JSONException e) {
 				Log.e(TAG, e.toString());
 			}
 		}
+	}
+
+	// Comparing the retrieved list of PC with that of Android's.
+	private void compareList(JSONObject pcDirList, HashMap<String, JSONObject> androidDirList, TextView stepInfoView) {
+		String stepInfo = "Comparing the retrieved list of PC with that of Android's...";
+		stepInfoView.setText(stepInfo);
+
+		ArrayList<String> filesToKeep = new ArrayList<>();
+		ArrayList<String> filesToBackup = new ArrayList<>();
+		for(Map.Entry<String, JSONObject> androidFile : androidDirList.entrySet()) {
+			String androidFileName = androidFile.getKey();
+
+			try {
+				JSONObject pcFileInfo = pcDirList.getJSONObject(androidFileName);
+				if(pcFileInfo.getString("is_dir").equals("false")) {
+					long androidFileLastModified = Long.parseLong(androidFile.getValue().getString("lastModified"));
+					long pcFileLastModified = Long.parseLong(pcFileInfo.getString("last_modified"));
+					if(androidFileLastModified > pcFileLastModified)
+						filesToBackup.add(androidFileName);
+					else
+						filesToKeep.add(androidFileName);
+				}
+				else
+					filesToKeep.add(androidFileName);
+			} catch (JSONException e) {
+				filesToBackup.add(androidFileName);
+			}
+		}
+
+		Log.d(TAG, "filesToKeep: " + filesToKeep);
+		Log.d(TAG, "filesToBackup: " + filesToBackup);
 	}
 }
