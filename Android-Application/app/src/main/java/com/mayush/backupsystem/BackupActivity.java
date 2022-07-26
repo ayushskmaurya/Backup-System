@@ -132,7 +132,32 @@ public class BackupActivity extends AppCompatActivity {
 			}
 		}
 
-		Log.d(TAG, "filesToKeep: " + filesToKeep);
-		Log.d(TAG, "filesToBackup: " + filesToBackup);
+		delete_files(pcDirList, filesToKeep, filesToBackup, stepInfoView);
+	}
+
+	// Deleting unwanted files.
+	private void delete_files(JSONObject pcDirList, JSONArray filesToKeep, JSONArray filesToBackup, TextView stepInfoView) {
+		String stepInfo = "Deleting unwanted files...";
+		stepInfoView.setText(stepInfo);
+
+		Volley.newRequestQueue(this).add(
+				new StringRequest(
+						Request.Method.POST,
+						Base.getBaseUrl() + "/delete_files",
+						response -> {
+							if(response.equals("1"))
+								Log.d(TAG, "filesToBackup: " + filesToBackup);
+						},
+						error -> Log.e(TAG, error.toString())
+				) {
+					@Override
+					protected Map<String, String> getParams() {
+						Map<String, String> params = new HashMap<>();
+						params.put("pc_dir_list", pcDirList.toString());
+						params.put("files_to_keep", filesToKeep.toString());
+						return params;
+					}
+				}
+		);
 	}
 }

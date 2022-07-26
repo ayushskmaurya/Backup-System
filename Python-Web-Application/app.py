@@ -1,6 +1,8 @@
 from flask import Flask, render_template, redirect, request, url_for, jsonify
 from base import Base
 import os
+import shutil
+import json
 
 app = Flask(__name__)
 app.secret_key = "1234"
@@ -51,6 +53,23 @@ def get_pc_dir_list():
 	if dir_path is not None and os.path.exists(dir_path) and os.path.isdir(dir_path):
 		pc_files(dir_path, "", pc_dir_list)
 	return jsonify(pc_dir_list)
+
+
+# Deleting unwanted files.
+@app.route("/delete_files", methods=['POST'])
+def delete_files():
+	pc_dir_list = json.loads(request.form['pc_dir_list'])
+	files_to_keep = json.loads(request.form['files_to_keep'])
+
+	for file in pc_dir_list:
+		if file not in files_to_keep:
+			file_path = os.path.join(base.get_dir_path(), file)
+			if os.path.exists(file_path):
+				if os.path.isdir(file_path):
+					shutil.rmtree(file_path)
+				else:
+					os.remove(file_path)
+	return "1"
 
 
 if __name__ == '__main__':
