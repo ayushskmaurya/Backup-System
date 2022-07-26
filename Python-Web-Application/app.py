@@ -1,11 +1,10 @@
-from flask import Flask, render_template, redirect, url_for, session, jsonify
-from tkinter import *
-from tkinter import filedialog
-from PIL import Image, ImageTk
+from flask import Flask, render_template, redirect, request, url_for, jsonify
+from base import Base
 import os
 
 app = Flask(__name__)
 app.secret_key = "1234"
+base = Base()
 
 
 # Listing all the files and folders of the selected directory.
@@ -29,35 +28,30 @@ def pc_files(abs_path, path, pc_dir_list):
 @app.route("/")
 def home():
 	dir_path = None
-	if 'show_path' in session and session['show_path']:
-		dir_path = session['dir_path']
-		session['show_path'] = False
+	if base.get_show_dir_path():
+		dir_path = base.get_dir_path()
+		base.set_show_dir_path(False)
 	return render_template("index.html", dir_path=dir_path)
 
 
-@app.route("/browse")
-def browse():
-	root = Tk()
-	root.title("Backup System")
-	root.geometry("270x0")
-	root.iconphoto(False, ImageTk.PhotoImage(Image.open('static\\logo\\logo.ico')))
-
-	dir_path = filedialog.askdirectory().strip()
-	if len(dir_path) != 0:
-		session['dir_path'] = dir_path
-		session['show_path'] = True
-	
-	root.destroy()
-	root.mainloop()
+@app.route("/dir_path", methods=['POST'])
+def dir_path():
+	entered_dir_path = request.form['dir_path'].strip()
+	if len(entered_dir_path) != 0:
+		base.set_dir_path(entered_dir_path)
+		base.set_show_dir_path(True)
 	return redirect(url_for('home'))
 
 
+# Retrieving list of all files & folders of PC.
 @app.route("/get_pc_dir_list")
 def get_pc_dir_list():
 	pc_dir_list = {}
-	pc_files(session['dir_path'], "", pc_dir_list)
+	dir_path = base.get_dir_path()
+	if dir_path is not None and os.path.exists(dir_path) and os.path.isdir(dir_path):
+		pc_files(dir_path, "", pc_dir_list)
 	return jsonify(pc_dir_list)
 
 
 if __name__ == '__main__':
-	app.run(debug=True)
+	app.run(debug=True, host=base.get_host())

@@ -31,12 +31,30 @@ body {
 	font-weight: bold;
 }
 
-.browse {
+.proceed {
 	margin: auto;
 }
 
-.browse > button {
+.proceed label {
+	margin-left: 20px;
+	font-size: 1.2rem;
+}
+
+.proceed input {
 	width: 100%;
+	font-size: 1.2rem;
+	padding: 15px;
+	border: 1px solid #188754;
+	border-radius: 25px;
+	box-sizing: border-box;
+}
+.proceed input:focus {
+	outline: none;
+}
+
+.proceed button {
+	width: 100%;
+	margin-top: 10px;
 	background-color: #188754;
 	color: #fff;
 	font-size: 1.2rem;
@@ -45,18 +63,18 @@ body {
 	border: none;
 	border-radius: 25px;
 }
-.browse>button:hover {
+.proceed button:hover {
 	background-color: #299865;
 }
 
 @media (min-width: 320px) {
-	.dir_path, .browse {
+	.dir_path, .proceed {
 		width: 300px;
 	}
 }
 
 @media (max-width: 319px) {
-	.dir_path, .browse {
+	.dir_path, .proceed {
 		width: 200px;
 	}
 }

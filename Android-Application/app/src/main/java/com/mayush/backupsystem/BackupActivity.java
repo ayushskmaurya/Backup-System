@@ -13,11 +13,11 @@ import com.android.volley.Request;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -110,8 +110,8 @@ public class BackupActivity extends AppCompatActivity {
 		String stepInfo = "Comparing the retrieved list of PC with that of Android's...";
 		stepInfoView.setText(stepInfo);
 
-		ArrayList<String> filesToKeep = new ArrayList<>();
-		ArrayList<String> filesToBackup = new ArrayList<>();
+		JSONArray filesToKeep = new JSONArray();
+		JSONArray filesToBackup = new JSONArray();
 		for(Map.Entry<String, JSONObject> androidFile : androidDirList.entrySet()) {
 			String androidFileName = androidFile.getKey();
 
@@ -121,14 +121,14 @@ public class BackupActivity extends AppCompatActivity {
 					long androidFileLastModified = Long.parseLong(androidFile.getValue().getString("lastModified"));
 					long pcFileLastModified = Long.parseLong(pcFileInfo.getString("last_modified"));
 					if(androidFileLastModified > pcFileLastModified)
-						filesToBackup.add(androidFileName);
+						filesToBackup.put(androidFileName);
 					else
-						filesToKeep.add(androidFileName);
+						filesToKeep.put(androidFileName);
 				}
 				else
-					filesToKeep.add(androidFileName);
+					filesToKeep.put(androidFileName);
 			} catch (JSONException e) {
-				filesToBackup.add(androidFileName);
+				filesToBackup.put(androidFileName);
 			}
 		}
 

@@ -19,8 +19,12 @@
 	</div>
 
 	{% else %}
-	<div class="browse">
-		<button onclick="location.href='/browse';">Browse</button>
+	<div class="proceed">
+		<form action="/dir_path" method="post">
+			<label for="dir_path">Directory Path:</label><br>
+			<input type="text" id="dir_path" name="dir_path" placeholder="Directory Path">
+			<button type="submit">Proceed</button>
+		</form>
 	</div>
 	{% endif %}
 </body>
