@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Base64;
 import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -18,6 +19,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,6 +34,10 @@ public class BackupActivity extends AppCompatActivity {
 	private JSONObject pcDirList;
 	private HashMap<String, JSONObject> androidDirList;
 	private JSONArray filesToKeep, filesToBackup;
+	private static boolean shouldContProcess = true, isCurrFileDir = true;
+	private InputStream inputStream;
+	private int noOfBytesRead;
+	private byte[] buffer = new byte[1048576];
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -42,8 +50,15 @@ public class BackupActivity extends AppCompatActivity {
 		TextView enteredDirPathView = findViewById(R.id.enteredDirPath_activityBackup);
 		enteredDirPathView.setText(enteredDirPath);
 
-		stepInfoView = findViewById(R.id.stepInfo_activityBackup);
-		getPcDirList();
+		if(shouldContProcess) {
+			stepInfoView = findViewById(R.id.stepInfo_activityBackup);
+			getPcDirList();
+		}
+		else {
+			String msg = "Wait for few seconds and then click on Proceed button or Restart the app.";
+			Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+			this.finish();
+		}
 	}
 
 	// Retrieving list of all files & folders of PC.
@@ -153,7 +168,7 @@ public class BackupActivity extends AppCompatActivity {
 						Base.getBaseUrl() + "/delete_files",
 						response -> {
 							if(response.equals("1"))
-								Log.d(TAG, "filesToBackup: " + filesToBackup);
+								backup_files();
 						},
 						error -> Log.e(TAG, error.toString())
 				) {
@@ -166,5 +181,76 @@ public class BackupActivity extends AppCompatActivity {
 					}
 				}
 		);
+	}
+
+	// Taking backup of the files.
+	private void backup_files() {
+		stepInfo = "Taking backup of the files...";
+		stepInfoView.setText(stepInfo);
+		getNewFile();
+	}
+
+	// Saving chunk of a file in PC.
+	private void save_chunk(String filePath, String isDir) {
+		String encFileChunkStr = isCurrFileDir ? "" : android.util.Base64.encodeToString(buffer, 0, noOfBytesRead, Base64.DEFAULT);
+
+		Volley.newRequestQueue(this).add(
+				new StringRequest(
+						Request.Method.POST,
+						Base.getBaseUrl() + "/backup_files",
+						response -> {
+							if(shouldContProcess) {
+								try {
+									if(!isCurrFileDir && ((noOfBytesRead = inputStream.read(buffer)) != -1))
+										save_chunk(filePath, isDir);
+									else
+										getNewFile();
+								} catch (IOException e) {
+									Log.e(TAG, e.toString());
+								}
+							}
+							else
+								shouldContProcess = true;
+						},
+						error -> Log.e(TAG, error.toString())
+				) {
+					@Override
+					protected Map<String, String> getParams() {
+						Map<String, String> params = new HashMap<>();
+						params.put("file_path", filePath);
+						params.put("enc_file_chunk_str", encFileChunkStr);
+						params.put("is_dir", isDir);
+						return params;
+					}
+				}
+		);
+	}
+
+	// Getting new file to backup.
+	private void getNewFile() {
+		try {
+			String fileToBackup = filesToBackup.getString(0);
+			filesToBackup.remove(0);
+			String isDir = androidDirList.get(fileToBackup).getString("isDir");
+			isCurrFileDir = Boolean.parseBoolean(isDir);
+			if(!isCurrFileDir) {
+				inputStream = new FileInputStream(new File(dir, fileToBackup));
+				noOfBytesRead = inputStream.read(buffer);
+			}
+			save_chunk(fileToBackup, isDir);
+
+		} catch (JSONException e) {
+			Toast.makeText(this, "Backup Completed.", Toast.LENGTH_SHORT).show();
+			this.finish();
+		} catch (IOException e) {
+			Log.e(TAG, e.toString());
+		}
+	}
+
+	@Override
+	public void onBackPressed() {
+		shouldContProcess = false;
+		super.onBackPressed();
+		finish();
 	}
 }
