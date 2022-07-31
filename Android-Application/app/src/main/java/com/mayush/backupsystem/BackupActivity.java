@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,6 +30,7 @@ public class BackupActivity extends AppCompatActivity {
 	private static final String TAG = "AppLogBackupActivity";
 	private static final String ENTERED_DIR_PATH = "com.mayush.backupsystem.enteredDirPath";
 	private File dir;
+	private TextView completeStatus;
 	private TextView stepInfoView;
 	private String stepInfo;
 	private JSONObject pcDirList;
@@ -37,7 +39,8 @@ public class BackupActivity extends AppCompatActivity {
 	private static boolean shouldContProcess = true, isCurrFileDir = true;
 	private InputStream inputStream;
 	private int noOfBytesRead;
-	private byte[] buffer = new byte[1048576];
+	private byte[] buffer = new byte[10485760];
+	private long totalBytesSaved = 0, totalSize = 0;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +54,7 @@ public class BackupActivity extends AppCompatActivity {
 		enteredDirPathView.setText(enteredDirPath);
 
 		if(shouldContProcess) {
+			completeStatus = findViewById(R.id.completeStatus_activityBackup);
 			stepInfoView = findViewById(R.id.stepInfo_activityBackup);
 			getPcDirList();
 		}
@@ -106,6 +110,7 @@ public class BackupActivity extends AppCompatActivity {
 			String filePath = (new File(path, file.getName())).toString();
 			boolean isDir;
 			String lastModified = null;
+			String size = null;
 
 			if(file.isDirectory()) {
 				isDir = true;
@@ -114,12 +119,14 @@ public class BackupActivity extends AppCompatActivity {
 			else {
 				isDir = false;
 				lastModified = String.valueOf(file.lastModified() / 1000);
+				size = String.valueOf(file.length());
 			}
 
 			JSONObject fileInfo = new JSONObject();
 			try {
 				fileInfo.put("isDir", isDir);
 				fileInfo.put("lastModified", lastModified);
+				fileInfo.put("size", size);
 				androidDirList.put(filePath, fileInfo);
 			} catch (JSONException e) {
 				Log.e(TAG, e.toString());
@@ -142,8 +149,12 @@ public class BackupActivity extends AppCompatActivity {
 				if(pcFileInfo.getString("is_dir").equals("false")) {
 					long androidFileLastModified = Long.parseLong(androidFile.getValue().getString("lastModified"));
 					long pcFileLastModified = Long.parseLong(pcFileInfo.getString("last_modified"));
-					if(androidFileLastModified > pcFileLastModified)
+					long androidFileSize = Long.parseLong(androidFile.getValue().getString("size"));
+					long pcFileSize = Long.parseLong(pcFileInfo.getString("size"));
+					if(androidFileLastModified > pcFileLastModified || androidFileSize != pcFileSize) {
 						filesToBackup.put(androidFileName);
+						totalSize += androidFileSize;
+					}
 					else
 						filesToKeep.put(androidFileName);
 				}
@@ -151,6 +162,12 @@ public class BackupActivity extends AppCompatActivity {
 					filesToKeep.put(androidFileName);
 			} catch (JSONException e) {
 				filesToBackup.put(androidFileName);
+				try {
+					if(androidFile.getValue().getString("isDir").equals("false"))
+						totalSize += Long.parseLong(androidFile.getValue().getString("size"));
+				} catch (JSONException ex) {
+					Log.e(TAG, ex.toString());
+				}
 			}
 		}
 
@@ -187,6 +204,8 @@ public class BackupActivity extends AppCompatActivity {
 	private void backup_files() {
 		stepInfo = "Taking backup of the files...";
 		stepInfoView.setText(stepInfo);
+		completeStatus.setText("0%");
+		completeStatus.setVisibility(View.VISIBLE);
 		getNewFile();
 	}
 
@@ -199,6 +218,10 @@ public class BackupActivity extends AppCompatActivity {
 						Request.Method.POST,
 						Base.getBaseUrl() + "/backup_files",
 						response -> {
+							totalBytesSaved += noOfBytesRead;
+							long bytesSaved =  (long) (((double) totalBytesSaved / totalSize) * 100);
+							String statusText = bytesSaved + "%";
+							completeStatus.setText(statusText);
 							if(shouldContProcess) {
 								try {
 									if(!isCurrFileDir && ((noOfBytesRead = inputStream.read(buffer)) != -1))

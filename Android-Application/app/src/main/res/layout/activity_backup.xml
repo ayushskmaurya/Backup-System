@@ -71,6 +71,19 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
+            android:id="@+id/completeStatus_activityBackup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/red"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/progressBar_activityBackup"
+            app:layout_constraintEnd_toEndOf="@+id/progressBar_activityBackup"
+            app:layout_constraintStart_toStartOf="@+id/progressBar_activityBackup"
+            app:layout_constraintTop_toTopOf="@+id/progressBar_activityBackup" />
+
+        <TextView
             android:id="@+id/stepInfo_activityBackup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

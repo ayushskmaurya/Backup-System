@@ -3,9 +3,11 @@ from base import Base
 import os
 import shutil
 import json
+import base64
+import random
 
 app = Flask(__name__)
-app.secret_key = "1234"
+app.secret_key = str(random.randint(1111, 9999)).encode()
 base = Base()
 
 
@@ -15,7 +17,7 @@ def pc_files(abs_path, path, pc_dir_list):
 	for file in files:
 		abs_file_path = os.path.join(abs_path, file)
 		file_path = os.path.join(path, file)
-		is_dir, last_modified = None, None
+		is_dir, last_modified, size = None, None, None
 
 		if os.path.isdir(abs_file_path):
 			is_dir = True
@@ -23,8 +25,9 @@ def pc_files(abs_path, path, pc_dir_list):
 		else:
 			is_dir = False
 			last_modified = int(os.path.getmtime(abs_file_path))
+			size = os.path.getsize(abs_file_path)
 
-		pc_dir_list[file_path.replace("\\", "/")] = {'is_dir': is_dir, 'last_modified': last_modified}
+		pc_dir_list[file_path.replace("\\", "/")] = {'is_dir': is_dir, 'last_modified': last_modified, 'size': size}
 
 
 @app.route("/")
@@ -72,5 +75,26 @@ def delete_files():
 	return "1"
 
 
+# Taking backup of the files.
+@app.route("/backup_files", methods=['POST'])
+def backup_files():
+	file_path = request.form['file_path']
+	enc_file_chunk_str = request.form['enc_file_chunk_str']
+	is_dir = request.form['is_dir']
+	abs_file_path = os.path.join(base.get_dir_path(), file_path)
+
+	if is_dir == "true":
+		if not os.path.exists(abs_file_path):
+			os.makedirs(abs_file_path)
+	else:
+		dirname = os.path.dirname(abs_file_path)
+		if not os.path.exists(dirname):
+			os.makedirs(dirname)
+		with open(abs_file_path, "ab") as file_to_backup:
+			file_to_backup.write(base64.b64decode(enc_file_chunk_str))
+	
+	return "1"
+
+
 if __name__ == '__main__':
-	app.run(debug=True, host=base.get_host())
+	app.run(host=base.get_host())

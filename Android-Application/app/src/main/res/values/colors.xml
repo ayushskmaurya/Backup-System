@@ -9,6 +9,7 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="green">#FF188754</color>
+    <color name="red">#C8FF0000</color>
 
     <color name="text_hint">#77000000</color>
 </resources>
